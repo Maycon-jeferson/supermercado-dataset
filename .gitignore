@@ -12,10 +12,6 @@ __pycache__/
 # Jupyter
 .ipynb_checkpoints/
 
-# Dados locais
-data/raw/*
-data/processed/*
-
 # Arquivos temporários
 *.log
 *.tmp
