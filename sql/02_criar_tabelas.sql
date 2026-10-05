@@ -12,17 +12,20 @@ CREATE TABLE IF NOT EXISTS raw_vendas (
     "Customer type" VARCHAR(50) NOT NULL,
     "Gender" VARCHAR(20) NOT NULL,
     "Product line" VARCHAR(150) NOT NULL,
-    "Unit price" NUMERIC(10, 2) NOT NULL,
-    "Quantity" INTEGER NOT NULL,
-    "Tax 5%" NUMERIC(10, 2) NOT NULL,
-    "Sales" NUMERIC(12, 2) NOT NULL,
+    
+    "Unit price" NUMERIC(10, 2) NOT NULL CHECK ("Unit price" >= 0),
+    "Quantity" INTEGER NOT NULL CHECK ("Quantity" > 0),
+    "Tax 5%" NUMERIC(10, 2) NOT NULL CHECK ("Tax 5%" >= 0),
+    "Sales" NUMERIC(12, 2) NOT NULL CHECK ("Sales" >= 0),
+    
     "Date" VARCHAR(20) NOT NULL,
     "Time" VARCHAR(20) NOT NULL,
     "Payment" VARCHAR(50) NOT NULL,
-    "cogs" NUMERIC(12, 2) NOT NULL,
+    
+    "cogs" NUMERIC(12, 2) NOT NULL CHECK ("cogs" >= 0),
     "gross margin percentage" NUMERIC(10, 6) NOT NULL,
-    "gross income" NUMERIC(12, 4) NOT NULL,
-    "Rating" NUMERIC(4, 2) NOT NULL
+    "gross income" NUMERIC(12, 4) NOT NULL CHECK ("gross income" >= 0),
+    "Rating" NUMERIC(4, 2) NOT NULL CHECK ("Rating" >= 0 AND "Rating" <= 10)
 );
 
 --Conferir a estrutura
