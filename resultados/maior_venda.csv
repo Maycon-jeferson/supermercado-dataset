@@ -1,2 +1,2 @@
-"Invoice ID","Branch","Product line","Sales"
-"860-79-0874",Giza,Fashion accessories,1042.65
+﻿,id_venda,Filial,Cidade,tipo_cliente,Gênero,linha_produto,preco_unitario,Quantidade,Imposto,valor_total,data_venda,hora_venda,forma_pagamento,custo_mercadoria,margem_percentual,receita_bruta,Avaliação
+350,860-79-0874,Giza,Naypyitaw,Member,Female,Fashion accessories,99.3,10,49.65,1042.65,2019-02-15 00:00:00,14:53:00,Credit card,993.0,4.761904762,49.65,6.6
