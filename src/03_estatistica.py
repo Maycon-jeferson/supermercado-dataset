@@ -1,4 +1,5 @@
 from pathlib import Path
+import matplotlib.pyplot as plt
 import pandas as pd
 
 # ============================================================
@@ -16,8 +17,11 @@ ARQUIVO_ENTRADA = (
     / "vendas_tratadas.csv"
 )
 
-# Diretório onde os artefatos da análise exploratória serão salvos
+# Diretório onde os artefatos em CSV serão salvos
 DIRETORIO_RESULTADOS = BASE_DIR / "resultados"
+
+# Diretório onde as imagens dos gráficos serão salvas
+DIRETORIO_GRAFICOS = DIRETORIO_RESULTADOS / "graficos"
 
 # ============================================================
 # CARREGAMENTO
@@ -32,7 +36,6 @@ def carregar_dados():
 
     print(f"Arquivo: {ARQUIVO_ENTRADA}")
 
-    # Lê o CSV tratado convertendo a coluna de data nativamente
     df = pd.read_csv(
         ARQUIVO_ENTRADA,
         parse_dates=["data_venda"]
@@ -196,7 +199,6 @@ def analisar_valor_medio_vendas(df):
 
     print(f"Valor médio de uma venda: R$ {valor_medio:,.2f}")
 
-    # Retorna como um DataFrame formatado para facilitar a exportação para CSV
     return pd.DataFrame({
         "indicador": ["valor_medio_venda"],
         "valor": [valor_medio]
@@ -217,7 +219,6 @@ def analisar_maior_venda(df):
     print(f"Linha de produto: {maior_venda['linha_produto']}")
     print(f"Valor da venda: R$ {maior_venda['valor_total']:,.2f}")
 
-    # .to_frame().T converte a Series de volta em um DataFrame de uma única linha para exportação
     return maior_venda.to_frame().T
 
 def analisar_vendas_por_dia_semana(df):
@@ -244,13 +245,12 @@ def analisar_vendas_por_dia_semana(df):
     return resultado
 
 # ============================================================
-# EXPORTAÇÃO DE RESULTADOS
+# EXPORTAÇÃO E VISUALIZAÇÃO
 # ============================================================
 
 def salvar_resultados(resultados):
     """Salva os resultados das análises em arquivos CSV separados."""
 
-    # Cria a pasta 'resultados' caso não exista
     DIRETORIO_RESULTADOS.mkdir(parents=True, exist_ok=True)
 
     arquivos = {
@@ -271,7 +271,6 @@ def salvar_resultados(resultados):
     for nome_arquivo, resultado in arquivos.items():
         caminho = DIRETORIO_RESULTADOS / nome_arquivo
 
-        # Salva o arquivo CSV mantendo o índice (importante, pois ele guarda nomes de filiais, produtos, etc.)
         resultado.to_csv(
             caminho,
             index=True,
@@ -279,6 +278,165 @@ def salvar_resultados(resultados):
         )
 
         print(f"Salvo: {caminho}")
+
+def gerar_graficos(resultados):
+    """Gera os gráficos das principais análises."""
+
+    DIRETORIO_GRAFICOS.mkdir(parents=True, exist_ok=True)
+
+    print("\n" + "=" * 60)
+    print("GERANDO GRÁFICOS")
+    print("=" * 60)
+
+    # --------------------------------------------------------
+    # 1. Receita por filial
+    # --------------------------------------------------------
+    receita_filial = resultados["receita_por_filial"]
+    plt.figure(figsize=(8, 5))
+    receita_filial.plot(kind="bar")
+    plt.title("Receita Total por Filial")
+    plt.xlabel("Filial")
+    plt.ylabel("Receita (R$)")
+    plt.xticks(rotation=0)
+    plt.tight_layout()
+    caminho = DIRETORIO_GRAFICOS / "01_receita_por_filial.png"
+    plt.savefig(caminho, dpi=300)
+    plt.close()
+    print(f"Salvo: {caminho}")
+
+    # --------------------------------------------------------
+    # 2. Quantidade de vendas por filial
+    # --------------------------------------------------------
+    quantidade_filial = resultados["quantidade_vendas_por_filial"]
+    plt.figure(figsize=(8, 5))
+    quantidade_filial.plot(kind="bar")
+    plt.title("Quantidade de Vendas por Filial")
+    plt.xlabel("Filial")
+    plt.ylabel("Quantidade de vendas")
+    plt.xticks(rotation=0)
+    plt.tight_layout()
+    caminho = DIRETORIO_GRAFICOS / "02_quantidade_vendas_por_filial.png"
+    plt.savefig(caminho, dpi=300)
+    plt.close()
+    print(f"Salvo: {caminho}")
+
+    # --------------------------------------------------------
+    # 3. Receita por linha de produto
+    # --------------------------------------------------------
+    receita_produto = resultados["receita_por_linha"]
+    plt.figure(figsize=(10, 6))
+    receita_produto.sort_values().plot(kind="barh")
+    plt.title("Receita por Linha de Produto")
+    plt.xlabel("Receita (R$)")
+    plt.ylabel("Linha de produto")
+    plt.tight_layout()
+    caminho = DIRETORIO_GRAFICOS / "03_receita_por_linha.png"
+    plt.savefig(caminho, dpi=300)
+    plt.close()
+    print(f"Salvo: {caminho}")
+
+    # --------------------------------------------------------
+    # 4. Vendas por dia da semana
+    # --------------------------------------------------------
+    vendas_dia = resultados["vendas_por_dia_da_semana"]
+    ordem_dias = [
+        "Monday", "Tuesday", "Wednesday", "Thursday", 
+        "Friday", "Saturday", "Sunday"
+    ]
+    vendas_dia = vendas_dia.reindex(ordem_dias)
+    
+    plt.figure(figsize=(10, 5))
+    vendas_dia.plot(kind="bar")
+    plt.title("Quantidade de Vendas por Dia da Semana")
+    plt.xlabel("Dia da semana")
+    plt.ylabel("Quantidade de vendas")
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    caminho = DIRETORIO_GRAFICOS / "04_vendas_por_dia_da_semana.png"
+    plt.savefig(caminho, dpi=300)
+    plt.close()
+    print(f"Salvo: {caminho}")
+
+    # --------------------------------------------------------
+    # 5. Avaliação média por linha de produto
+    # --------------------------------------------------------
+    avaliacao_produto = resultados["avaliacao_por_produto"]
+    plt.figure(figsize=(10, 6))
+    # Ordena para a maior nota ficar no topo
+    avaliacao_produto.sort_values().plot(kind="barh", color="#17a2b8")
+    plt.title("Avaliação Média por Linha de Produto")
+    plt.xlabel("Avaliação (0 a 10)")
+    plt.ylabel("Linha de produto")
+    plt.xlim(0, 10) # Trava o eixo X no máximo da nota (10)
+    plt.tight_layout()
+    caminho = DIRETORIO_GRAFICOS / "05_avaliacao_por_produto.png"
+    plt.savefig(caminho, dpi=300)
+    plt.close()
+    print(f"Salvo: {caminho}")
+
+    # --------------------------------------------------------
+    # 6. Formas de pagamento
+    # --------------------------------------------------------
+    formas_pagamento = resultados["formas_pagamento"]
+    plt.figure(figsize=(8, 8))
+    # Um gráfico de pizza é excelente para mostrar proporções/fatias do todo
+    formas_pagamento.plot(kind="pie", autopct="%1.1f%%", startangle=90, cmap="Pastel1")
+    plt.title("Distribuição das Formas de Pagamento")
+    plt.ylabel("") # Remove o título lateral que o Pandas coloca por padrão na pizza
+    plt.tight_layout()
+    caminho = DIRETORIO_GRAFICOS / "06_formas_pagamento.png"
+    plt.savefig(caminho, dpi=300)
+    plt.close()
+    print(f"Salvo: {caminho}")
+
+    # --------------------------------------------------------
+    # 7. Média de Vendas (Ticket Médio - KPI Card)
+    # --------------------------------------------------------
+    # Extrai o valor do DataFrame retornado pela função
+    media_vendas = resultados["media_de_vendas"]["valor"].iloc[0]
+    
+    plt.figure(figsize=(6, 4))
+    plt.axis("off") # Esconde os eixos, deixando apenas o texto
+    plt.text(
+        0.5, 0.5, 
+        f"Ticket Médio:\nR$ {media_vendas:,.2f}", 
+        fontsize=24, ha="center", va="center", fontweight="bold", color="#28a745"
+    )
+    plt.title("Indicador de Desempenho", fontsize=14, color="gray")
+    plt.tight_layout()
+    caminho = DIRETORIO_GRAFICOS / "07_media_de_vendas.png"
+    plt.savefig(caminho, dpi=300)
+    plt.close()
+    print(f"Salvo: {caminho}")
+
+    # --------------------------------------------------------
+    # 8. Maior Venda (KPI Card)
+    # --------------------------------------------------------
+    maior_venda = resultados["maior_venda"].iloc[0]
+    
+    plt.figure(figsize=(8, 4))
+    plt.axis("off") # Esconde os eixos
+    
+    # Monta o texto que vai dentro do quadro
+    texto_card = (
+    f"MAIOR VENDA REGISTRADA\n\n"
+    f"ID da Venda: {maior_venda['id_venda']}\n"
+    f"Filial: {maior_venda['Filial']}\n"
+    f"Produto: {maior_venda['linha_produto']}\n\n"
+    f"Valor Total: R$ {maior_venda['valor_total']:,.2f}"
+)
+    
+    # Renderiza o texto com uma caixa (bbox) em volta simulando um cartão
+    plt.text(
+        0.5, 0.5, texto_card, 
+        fontsize=14, ha="center", va="center", 
+        bbox=dict(facecolor="#f8f9fa", edgecolor="#ced4da", boxstyle="round,pad=1")
+    )
+    plt.tight_layout()
+    caminho = DIRETORIO_GRAFICOS / "08_maior_venda.png"
+    plt.savefig(caminho, dpi=300)
+    plt.close()
+    print(f"Salvo: {caminho}")
 
 # ============================================================
 # MAIN
@@ -289,27 +447,19 @@ def main():
 
     estatistica_descritiva(df)
 
-    # Dicionário que irá armazenar os dados gerados pelas funções
     resultados = {}
 
     resultados["receita_por_filial"] = analisar_receita_por_filial(df)
-    
     resultados["quantidade_vendas_por_filial"] = analisar_quantidade_vendas_por_filial(df)
-    
     resultados["receita_por_linha"] = analisar_receita_por_linha_produto(df)
-    
     resultados["avaliacao_por_produto"] = analisar_avaliacao_por_linha_produto(df)
-    
     resultados["formas_pagamento"] = analisar_forma_pagamento(df)
-    
     resultados["media_de_vendas"] = analisar_valor_medio_vendas(df)
-    
     resultados["maior_venda"] = analisar_maior_venda(df)
-    
     resultados["vendas_por_dia_da_semana"] = analisar_vendas_por_dia_semana(df)
 
-    # Função final que vai ler o dicionário e gravar tudo na pasta 'resultados'
     salvar_resultados(resultados)
+    gerar_graficos(resultados)
 
 if __name__ == "__main__":
     main()
